@@ -12,8 +12,8 @@ Tested on:
 ## Quick install (recommended)
 
 ```
-git clone https://github.com/djwmarcx/Samsung-ML-Printer-Apple-M1.git
-cd Samsung-ML-Printer-Apple-M1
+git clone https://github.com/djwmarcx/Samsung-ML-Printer-Apple-Silicon.git
+cd Samsung-ML-Printer-Apple-Silicon
 sudo ./install.sh
 ```
 
