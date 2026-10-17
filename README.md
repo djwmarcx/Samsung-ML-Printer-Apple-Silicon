@@ -25,13 +25,30 @@ The script copies the driver files, fixes ownership and permissions, removes the
 quarantine flag that makes Gatekeeper block the filter, and checks that CUPS can
 see the driver.
 
+### First print: allow the filter in Gatekeeper
+
+The filter is not signed by Apple, so the first print job may fail with:
+
+> "rastertoqpdl" cannot be opened because the developer cannot be verified.
+
+Expect this. It is normal and only happens once:
+
+1. Open **System Settings** > **Privacy & Security**
+2. Scroll down to the message "rastertoqpdl was blocked from use because it is not from an identified developer"
+3. Click **Allow Anyway** and confirm with your password
+4. Print again. If a dialog appears, click **Open**
+
+`install.sh` strips the quarantine flag, which avoids this on most Macs, but
+macOS can still ask the first time CUPS runs the filter. The job is not lost,
+it just prints once you allow it.
+
 ### Printer connected by USB
 
 - Connect the printer
 - Open **System Settings** > **Printers & Scanners** > **Add Printer**
 - Select the printer and choose **Samsung ML-1640** (or ML-1660) as the driver
 - If you get "The printer software was installed incorrectly", click **Repair**
-- Print a test page
+- Print a test page. If it fails with the "developer cannot be verified" message, follow **First print** above
 
 ### Printer shared from another computer (Windows share, Linux CUPS, print server)
 
@@ -51,6 +68,9 @@ Then test:
 ```
 lp -d Samsung_ML_1640 /path/to/file.pdf
 ```
+
+If the first job fails with the "developer cannot be verified" message, follow
+**First print** above and print again.
 
 If you prefer the GUI: **Add Printer** > **IP** tab, Protocol **LPD**, Address = host IP,
 Queue = share name, and under **Use** choose **Select Software...** > **Samsung ML-1640**.
@@ -83,9 +103,7 @@ sudo xattr -dr com.apple.quarantine /Library/Printers/Samsung
 ## Troubleshooting
 
 - **"rastertoqpdl cannot be opened because the developer cannot be verified"**:
-  open **System Settings** > **Privacy & Security**, scroll to the message about
-  rastertoqpdl, click **Allow Anyway**, then print again. Running `install.sh`
-  (which removes the quarantine flag) normally avoids this.
+  see **First print: allow the filter in Gatekeeper** under Quick install.
 - **Verify the driver works without printing**:
 
 ```
