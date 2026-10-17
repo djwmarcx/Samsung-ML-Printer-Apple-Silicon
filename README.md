@@ -96,9 +96,29 @@ head -c 64 /tmp/out.qpdl | xxd
   network section above.
 - **Debug CUPS**: `cupsctl --debug-logging`, print, then read `/var/log/cups/error_log`.
 
-## Credits
+## Credits and origin of the code
 
-- Original ML-1640 driver packaging and Ventura instructions by [MTz12](https://github.com/MTz12/Samsung-ML-1640-Printer-Ventura-Apple-Silicon)
-- ML-1660 support by [molind](https://github.com/molind/Samsung-ML-Printer-Apple-M1)
-- `rastertoqpdl` and `pstoqpdl` come from the open source [SpliX](https://splix.sourceforge.net/) project
-- This fork: M4 and macOS 27 testing, network share instructions, and `install.sh`
+This repository is a fork. None of the driver code was written here.
+
+- The filters `rastertoqpdl` and `pstoqpdl` are unmodified arm64 builds of
+  [SpliX](https://splix.sourceforge.net/) 2.0.0 by Aurelien Croc, licensed under the
+  GNU GPL v2. SpliX source: https://sourceforge.net/projects/splix/
+- The PPD files were generated with the CUPS PPD compiler from the SpliX `.drv`
+  definitions for the ML-1640 and ML-1660, also GPL v2.
+- The icons, `Version.plist` and `autosetupinfo.plist` under `Samsung/` come from
+  Samsung's own macOS Universal Print Driver 3.92.00. They are Samsung copyright and
+  are included only so the printer gets its proper icon and USB auto setup. Printing
+  works without them.
+- Original packaging and Ventura instructions by
+  [MTz12](https://github.com/MTz12/Samsung-ML-1640-Printer-Ventura-Apple-Silicon),
+  ML-1660 support by [molind](https://github.com/molind/Samsung-ML-Printer-Apple-M1).
+  Neither parent repository declares a license.
+- This fork adds M4 and macOS 27 testing, the network share instructions, and
+  `install.sh`.
+
+## License
+
+The SpliX filters and the PPDs are GPL v2, see [LICENSE](LICENSE). The README and
+`install.sh` written in this fork are released under the same GPL v2 terms. The
+Samsung files listed above remain Samsung's property and are not covered by that
+license.
