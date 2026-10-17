@@ -4,6 +4,10 @@ These printers are GDI/QPDL-only devices. They cannot interpret PDF or PostScrip
 so the Mac must render every page to QPDL itself. This repo ships the arm64 build of
 the open source SpliX `rastertoqpdl` filter plus PPDs for the ML-1640 and ML-1660.
 
+*__Keep working hardware working.__ A laser printer like the ML-1640 is made of steel, aluminium, copper, plastic and electronics. Making one costs far more energy and raw material than it will ever use printing. When a driver disappears, none of that is worn out. The printer is fine, the toner is fine, only the software is gone.*
+
+*Every year millions of printers end up as e-waste for exactly this reason. The fix here is a few kilobytes: an open source filter and a config file. If your old printer still turns on, it probably deserves the same chance before it goes to the recycling bin.*
+
 Tested on:
 
 - Apple M1, macOS Ventura
