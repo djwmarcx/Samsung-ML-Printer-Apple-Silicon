@@ -1,39 +1,104 @@
-# How to install Samsung ML-1640 printer driver for macOS Ventura and Apple Silicon
+# Samsung ML-1640 / ML-1660 printer driver for Apple Silicon (M1 to M4) macOS
 
-This example shows how to install the ML-1640 printer driver on macOS Ventura.
+These printers are GDI/QPDL-only devices. They cannot interpret PDF or PostScript,
+so the Mac must render every page to QPDL itself. This repo ships the arm64 build of
+the open source SpliX `rastertoqpdl` filter plus PPDs for the ML-1640 and ML-1660.
 
-- clone the provided files
-````
-git clone https://github.com/MTz12/Samsung-ML-1640-Printer-Ventura-Apple-Silicon.git
-````
+Tested on:
 
-- copy the ``Samsung`` folder to
-````
-/Library/Printers/
-````
+- Apple M1, macOS Ventura
+- Apple M4 Pro, macOS 27.0.1 (printer shared over the network from a Windows PC)
 
-- copy the file ``Samsung ML-1640 Series.gz`` to
-````
-/Library/Printers/PPDs/Contents/Resources/
-````
+## Quick install (recommended)
 
-- open a terminal and execute the following commands
-````
-sudo chmod +x /Library/Printers/PPDs/Contents/Resources/Samsung\ ML-1640\ Series.gz
-sudo chown root:admin /Library/Printers/PPDs/Contents/Resources/Samsung\ ML-1640\ Series.gz
-````
+```
+git clone https://github.com/djwmarcx/Samsung-ML-Printer-Apple-M1.git
+cd Samsung-ML-Printer-Apple-M1
+sudo ./install.sh
+```
 
-- Connect the ML-1640 printer
-- Open **System Settings**
-- Go to **Printers & Scanners**
-- Click on **Add Printer**
-- Select **Samsung ML-1640** as the driver
-- You may get an error message: "The Printer software was installed incorrectly."
-- Click on **Repair** to fix the error
-- Start printing a test page
-- You may receive an error message when printing for the first time: "rastertoqpdl cannot be opened because the developer cannot be verified."
-- Open **System Preferences**
-- Go to **Privacy & Security**
-- Scroll down to the message "rastertoqpdl was blocked from use because it is not from an identified developer."
-- Accept the error message and click **Allow Anyway**
-- Try printing again and click **Open** when an error message appears
+The script copies the driver files, fixes ownership and permissions, removes the
+quarantine flag that makes Gatekeeper block the filter, and checks that CUPS can
+see the driver.
+
+### Printer connected by USB
+
+- Connect the printer
+- Open **System Settings** > **Printers & Scanners** > **Add Printer**
+- Select the printer and choose **Samsung ML-1640** (or ML-1660) as the driver
+- If you get "The printer software was installed incorrectly", click **Repair**
+- Print a test page
+
+### Printer shared from another computer (Windows share, Linux CUPS, print server)
+
+Do not add it as a "Generic" or raw printer. A Windows LPD share forwards the bytes
+it receives straight to the printer, so the Mac must send QPDL, which means the
+Samsung PPD must be attached to the queue on the Mac. Let the script create the
+queue for you:
+
+```
+sudo ./install.sh --queue Samsung_ML_1640 --uri "lpd://192.0.2.10/Samsung%20ML-1640%20Series"
+```
+
+Replace the IP with the host that shares the printer and the share name with the
+one configured on that host (spaces become `%20`). Use `--model 1660` for the ML-1660.
+Then test:
+
+```
+lp -d Samsung_ML_1640 /path/to/file.pdf
+```
+
+If you prefer the GUI: **Add Printer** > **IP** tab, Protocol **LPD**, Address = host IP,
+Queue = share name, and under **Use** choose **Select Software...** > **Samsung ML-1640**.
+
+If you already added the printer and it never prints, check what driver it has:
+
+```
+lpoptions -p <queue name> | tr ' ' '\n' | grep make-and-model
+```
+
+If it says `Local Raw Printer` or `Generic`, fix it without deleting the queue:
+
+```
+lpadmin -p <queue name> -P "/Library/Printers/PPDs/Contents/Resources/Samsung ML-1640 Series.gz"
+```
+
+## Manual install
+
+- copy the ``Samsung`` folder to ``/Library/Printers/``
+- copy the ``.gz`` files from ``PPDs/Content/Resources`` to ``/Library/Printers/PPDs/Contents/Resources/``
+- fix ownership:
+
+```
+sudo chown -R root:wheel /Library/Printers/Samsung
+sudo chmod 755 /Library/Printers/Samsung/UPD/Filters/*
+sudo chown root:wheel "/Library/Printers/PPDs/Contents/Resources/Samsung ML-1640 Series.gz"
+sudo xattr -dr com.apple.quarantine /Library/Printers/Samsung
+```
+
+## Troubleshooting
+
+- **"rastertoqpdl cannot be opened because the developer cannot be verified"**:
+  open **System Settings** > **Privacy & Security**, scroll to the message about
+  rastertoqpdl, click **Allow Anyway**, then print again. Running `install.sh`
+  (which removes the quarantine flag) normally avoids this.
+- **Verify the driver works without printing**:
+
+```
+printf 'hello\n' > /tmp/t.txt
+gunzip -c "/Library/Printers/PPDs/Contents/Resources/Samsung ML-1640 Series.gz" > /tmp/ml1640.ppd
+cupsfilter -p /tmp/ml1640.ppd -m printer/foo -e /tmp/t.txt > /tmp/out.qpdl
+head -c 64 /tmp/out.qpdl | xxd
+```
+
+  The output must start with `1b25 2d31 3233 3435 58` (the PJL header).
+- **Job disappears but nothing prints**: the queue is probably raw. See the
+  network section above.
+- **Debug CUPS**: `cupsctl --debug-logging`, print, then read `/var/log/cups/error_log`.
+
+## Credits
+
+- Original ML-1640 driver packaging and Ventura instructions by [MTz12](https://github.com/MTz12/Samsung-ML-1640-Printer-Ventura-Apple-Silicon)
+- ML-1660 support by [molind](https://github.com/molind/Samsung-ML-Printer-Apple-M1)
+- `rastertoqpdl` and `pstoqpdl` come from the open source [SpliX](https://splix.sourceforge.net/) project
+- This fork: M4 and macOS 27 testing, network share instructions, and `install.sh`
